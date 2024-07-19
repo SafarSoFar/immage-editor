@@ -1,0 +1,10 @@
+[package]
+name = "immage-editor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.28.1"
+egui = "0.28.1"
+egui_extras = { version = "*", features = ["all_loaders"] }
+image = "0.25.1"
