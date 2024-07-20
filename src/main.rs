@@ -4,16 +4,18 @@
 use std::{fs::File, io::Read};
 
 use eframe::egui;
-use egui::{ColorImage, Image, ImageData, TextureOptions};
+use egui::{ColorImage, Image, ImageData, TextureOptions, Vec2};
 use image::io::Reader;
-use image::{GenericImage, GenericImageView};
+use image::{GenericImage, GenericImageView, Rgba};
 use image::{DynamicImage, EncodableLayout, ImageBuffer};
 use std::io::Error;
+
+const WINDOW_SIZE : Vec2 = Vec2{x: 800.0, y :500.0};
 
 fn main() -> eframe::Result {
     //env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([320.0, 240.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size(WINDOW_SIZE),
         ..Default::default()
     };
 
@@ -22,7 +24,10 @@ fn main() -> eframe::Result {
     let mut age = 42;
     
     // required to use on init state to prevent freezes
-    let color_image = img_path_to_color_image("forest.jpg").unwrap();
+    let dyn_image = create_canvas_dynamic_image();
+    let color_image = dynamic_image_to_color_image(dyn_image).expect("couldn't convert dynamic image to color image");
+
+    //let color_image = img_path_to_color_image("forest.jpg").unwrap();
 
 
     eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
@@ -55,19 +60,13 @@ fn main() -> eframe::Result {
 }
 
 
-pub fn img_path_to_color_image(img_path : &str) -> Result<ColorImage, Error>{
-    //let image = egui::Image::new(egui::include_image!("../forest.jpg"));
-    //let dyn_image = DynamicImage::new(image);
-    let mut dyn_img = Reader::open(&img_path).expect("couldn't open image").decode().expect("couldn't decode image");
+pub fn create_canvas_dynamic_image() -> DynamicImage{
+    let dyn_img = DynamicImage::new(500,500,image::ColorType::Rgb8);
 
-    for pixel in dyn_img.clone().pixels(){
-        let pos_x : u32 = pixel.0;
-        let pos_y : u32 = pixel.1;
-        let mut rgba = pixel.2;
-        rgba[0] = 255;
-        dyn_img.put_pixel(pos_x, pos_y, rgba);
-    }
-    //let img = DynamicImage::ImageRgb8(())
+    dyn_img
+}
+
+pub fn dynamic_image_to_color_image(dyn_img : DynamicImage) -> Result<ColorImage, Error>{
     let color_image = match &dyn_img {
         DynamicImage::ImageRgb8(image) => {
             egui::ColorImage::from_rgb(
@@ -84,6 +83,12 @@ pub fn img_path_to_color_image(img_path : &str) -> Result<ColorImage, Error>{
         },
     };
     Ok(color_image)
+}
+
+pub fn img_path_to_dyn_image(img_path : &str) -> DynamicImage{
+    let dyn_img = Reader::open(&img_path).expect("couldn't open image").decode().expect("couldn't decode image");
+    dyn_img
+    
 
 }
 
