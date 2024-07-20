@@ -4,8 +4,9 @@
 use std::{fs::File, io::Read};
 
 use eframe::egui;
-use egui::{Image, ImageData};
-use image::{DynamicImage, EncodableLayout};
+use egui::{ColorImage, Image, ImageData, TextureOptions};
+use image::io::Reader;
+use image::{DynamicImage, EncodableLayout, ImageBuffer};
 use std::io::Error;
 
 fn main() -> eframe::Result {
@@ -27,30 +28,33 @@ fn main() -> eframe::Result {
 
             ui.heading("I'm mage editor");
             ui.horizontal(|ui| {
-                let name_label = ui.label("binary threshold text");
+                let name_label = ui.label("Your name: ");
                 ui.text_edit_singleline(&mut name)
                     .labelled_by(name_label.id);
             });
-            ui.add(egui::Slider::new(&mut age, 0..=255).text("binary threshold slider"));
+            ui.add(egui::Slider::new(&mut age, 0..=255).text("binary threshold"));
             if ui.button("Increment").clicked(){
                 age += 1;
             }
 
-            //ui.label(format!("Hello '{name}', age {age}"));
+            ui.label(format!("Hello '{name}', age {age}"));
+            let color_image = img_path_to_color_image("forest.jpg")?;
+            let main_image_tex_handle =  ctx.load_texture("main_image", color_image.clone(), TextureOptions::LINEAR);
+            let sized_image = egui::load::SizedTexture::new(main_image_tex_handle.id(), egui::vec2(color_image.size[0] as f32, color_image.size[1] as f32));
+            let image = egui::Image::from_texture(sized_image).max_size(egui::Vec2{x: 100.0, y : 100.0});
+            ui.add(image);
 
-            let mut image_buf = vec![];
-            File::open("../forest.jpg")?.read_to_end(&mut image_buf)?;
-            //let img = Image::from_bytes("hehe", &image_buf[..]);
-            //ui.image(egui::include_image!("../forest.jpg"));
-            //ui.add(egui::Image::new(egui::include_image!("../forest.jpg")).max_size(egui::Vec2 { x: (100.0), y: (100.0) }));
             Ok(())
         });
     })
 }
 
-/*pub fn convert_image(){
-    let image = egui::Image::new(egui::include_image!("../forest.jpg"));
-    let color_image = match &image {
+pub fn img_path_to_color_image(img_path : &str) -> Result<ColorImage, Error>{
+    //let image = egui::Image::new(egui::include_image!("../forest.jpg"));
+    //let dyn_image = DynamicImage::new(image);
+    let dyn_img = Reader::open(&img_path).expect("couldn't open image").decode().expect("couldn't decode image");
+    //let img = DynamicImage::ImageRgb8(())
+    let color_image = match &dyn_img {
         DynamicImage::ImageRgb8(image) => {
             egui::ColorImage::from_rgb(
                 [image.width() as usize,image.height() as usize],
@@ -59,7 +63,13 @@ fn main() -> eframe::Result {
         },
         other => {
             let image = other.to_rgba8();
-        }
+            egui::ColorImage::from_rgba_unmultiplied(
+            [image.width() as usize, image.height() as usize],
+                image.as_bytes()
+            )
+        },
     };
-}*/
+    Ok(color_image)
+
+}
 
