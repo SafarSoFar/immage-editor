@@ -6,6 +6,7 @@ use std::{fs::File, io::Read};
 use eframe::egui;
 use egui::{ColorImage, Image, ImageData, TextureOptions};
 use image::io::Reader;
+use image::{GenericImage, GenericImageView};
 use image::{DynamicImage, EncodableLayout, ImageBuffer};
 use std::io::Error;
 
@@ -19,6 +20,10 @@ fn main() -> eframe::Result {
     // Our application state:
     let mut name = "Arthur".to_owned();
     let mut age = 42;
+    
+    // required to use on init state to prevent freezes
+    let color_image = img_path_to_color_image("forest.jpg").unwrap();
+
 
     eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
         egui::CentralPanel::default().show(ctx, |ui| -> Result<(), Error> {
@@ -37,11 +42,11 @@ fn main() -> eframe::Result {
                 age += 1;
             }
 
-            ui.label(format!("Hello '{name}', age {age}"));
-            let color_image = img_path_to_color_image("forest.jpg")?;
+
             let main_image_tex_handle =  ctx.load_texture("main_image", color_image.clone(), TextureOptions::LINEAR);
             let sized_image = egui::load::SizedTexture::new(main_image_tex_handle.id(), egui::vec2(color_image.size[0] as f32, color_image.size[1] as f32));
             let image = egui::Image::from_texture(sized_image).max_size(egui::Vec2{x: 100.0, y : 100.0});
+            ui.label(format!("Hello '{name}', age {age}"));
             ui.add(image);
 
             Ok(())
@@ -49,10 +54,19 @@ fn main() -> eframe::Result {
     })
 }
 
+
 pub fn img_path_to_color_image(img_path : &str) -> Result<ColorImage, Error>{
     //let image = egui::Image::new(egui::include_image!("../forest.jpg"));
     //let dyn_image = DynamicImage::new(image);
-    let dyn_img = Reader::open(&img_path).expect("couldn't open image").decode().expect("couldn't decode image");
+    let mut dyn_img = Reader::open(&img_path).expect("couldn't open image").decode().expect("couldn't decode image");
+
+    for pixel in dyn_img.clone().pixels(){
+        let pos_x : u32 = pixel.0;
+        let pos_y : u32 = pixel.1;
+        let mut rgba = pixel.2;
+        rgba[0] = 255;
+        dyn_img.put_pixel(pos_x, pos_y, rgba);
+    }
     //let img = DynamicImage::ImageRgb8(())
     let color_image = match &dyn_img {
         DynamicImage::ImageRgb8(image) => {
