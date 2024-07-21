@@ -62,7 +62,7 @@ fn main() -> eframe::Result {
             
             let image_view_texture_handle =  ctx.load_texture("main_image", color_image.clone(), TextureOptions::LINEAR);
             let sized_image = egui::load::SizedTexture::new(image_view_texture_handle.id(), egui::vec2(color_image.size[0] as f32, color_image.size[1] as f32));
-            let image = egui::Image::from_texture(sized_image).max_size(egui::Vec2{x: 100.0, y : 100.0});
+            let image = egui::Image::from_texture(sized_image).max_size(egui::Vec2{x: 450.0, y : 450.0});
             ui.label(format!("Hello '{name}', age {age}"));
             ui.add(image);
             
@@ -71,24 +71,6 @@ fn main() -> eframe::Result {
     })
 }
 
-/*struct DynamicImageExtender;
-    impl DynamicImageExtender{
-        pub fn change_color_level(dyn_img : DynamicImage, r_level : i16, g_level : i16, b_level : i16) -> DynamicImage{
-            let mut new_dyn_img : DynamicImage = dyn_img.clone();
-            for pixel in dyn_img.pixels(){
-                let pos_x = pixel.0;
-                let pos_y = pixel.1;
-                let mut rgba = pixel.2;
-                rgba[0] = (rgba[0] as i16 + r_level as i16) as u8;
-                rgba[1] = (rgba[1] as i16 + g_level as i16) as u8;
-                rgba[2] = (rgba[2] as i16 + b_level as i16) as u8;
-                //rgba[1] = rgba[1].wrapping_add(g_level);
-                //rgba[2] = rgba[2].wrapping_add(b_level);
-                new_dyn_img.put_pixel(pos_x, pos_y, rgba);
-            }
-            new_dyn_img
-        }
-    }*/
 
 
 pub fn create_canvas_dynamic_image() -> DynamicImage{
