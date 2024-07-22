@@ -11,7 +11,7 @@ use image::{DynamicImage, EncodableLayout, ImageBuffer};
 use std::io::Error;
 
 mod image_extentions;
-use image_extentions::ImageWidgetExtender;
+use image_extentions::{ImageWidgetExtender, ImageEffectHandler};
 
 const WINDOW_SIZE : Vec2 = Vec2{x: 800.0, y :500.0};
 
@@ -32,7 +32,7 @@ fn main() -> eframe::Result {
     // required image initializatoin on set up stage to prevent freezes
     let original_dynamic_image = img_path_to_dyn_image("forest.jpg");
     
-    let mut image_widget_extender = ImageWidgetExtender::new(original_dynamic_image.clone());
+    let mut image_effect_handler = ImageEffectHandler::new(original_dynamic_image.clone());
 
     //let color_image = img_path_to_color_image("forest.jpg").unwrap();
     let mut color_image = ImageWidgetExtender::dynamic_image_to_color_image(original_dynamic_image.clone());
@@ -53,12 +53,12 @@ fn main() -> eframe::Result {
             let brightness_slider = ui.add(egui::Slider::new(&mut brightness, -255..=255).text("Brightness"));
 
             if r_level_slider.drag_stopped() || b_level_slider.drag_stopped() || g_level_slider.drag_stopped(){
-                edited_dynamic_image = image_widget_extender.change_color_level(r_level, g_level, b_level);
+                edited_dynamic_image = image_effect_handler.change_color_level(r_level, g_level, b_level);
                 color_image = ImageWidgetExtender::dynamic_image_to_color_image(edited_dynamic_image);
             }
             
             if brightness_slider.drag_stopped(){
-                edited_dynamic_image = image_widget_extender.change_image_brightness(brightness); 
+                edited_dynamic_image = image_effect_handler.change_image_brightness(brightness); 
                 color_image = ImageWidgetExtender::dynamic_image_to_color_image(edited_dynamic_image);
             }
             
