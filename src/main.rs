@@ -4,7 +4,7 @@
 use std::{fs::File, io::Read};
 
 use eframe::egui;
-use egui::{ColorImage, Image, ImageData, TextureOptions, Vec2};
+use egui::{pos2, Align2, Color32, ColorImage, Image, ImageData, Pos2, Rounding, Stroke, TextureOptions, Vec2};
 use image::io::Reader;
 use image::{GenericImage, GenericImageView, Rgba};
 use image::{DynamicImage, EncodableLayout, ImageBuffer};
@@ -23,15 +23,17 @@ fn main() -> eframe::Result {
     };  
 
     // Our application state:
-    let mut name = "Arthur".to_owned();
-    let mut age = 42;
     let mut r_level : i16 = 0;
     let mut g_level : i16 = 0;
     let mut b_level : i16 = 0;
-    
+    let mut brightness : i16 = 0;
+
+
     // required image initializatoin on set up stage to prevent freezes
     let original_dynamic_image = img_path_to_dyn_image("forest.jpg");
     
+    let mut dynamic_image_extender = DynamicImageExtender::new(original_dynamic_image.clone());
+
     //let color_image = img_path_to_color_image("forest.jpg").unwrap();
     let mut color_image = dynamic_image_to_color_image(original_dynamic_image.clone());
     
@@ -48,23 +50,28 @@ fn main() -> eframe::Result {
             let r_level_slider = ui.add(egui::Slider::new(&mut r_level, -255..=255).text("Red level"));
             let b_level_slider = ui.add(egui::Slider::new(&mut g_level, -255..=255).text("Green level"));
             let g_level_slider = ui.add(egui::Slider::new(&mut b_level, -255..=255).text("Blue level"));
-            
+            let brightness_slider = ui.add(egui::Slider::new(&mut brightness, -255..=255).text("Brightness"));
+
             if r_level_slider.drag_stopped() || b_level_slider.drag_stopped() || g_level_slider.drag_stopped(){
-                edited_dynamic_image = DynamicImageExtender::change_color_level(original_dynamic_image.clone(), r_level, g_level, b_level);
+                edited_dynamic_image = dynamic_image_extender.change_color_level(r_level, g_level, b_level);
                 color_image = dynamic_image_to_color_image(edited_dynamic_image);
             }
 
-            ui.add(egui::Slider::new(&mut age, 0..=255).text("binary threshold"));
-            if ui.button("Increment").clicked(){
-                age += 1;
-            }
-            
             
             let image_view_texture_handle =  ctx.load_texture("main_image", color_image.clone(), TextureOptions::LINEAR);
             let sized_image = egui::load::SizedTexture::new(image_view_texture_handle.id(), egui::vec2(color_image.size[0] as f32, color_image.size[1] as f32));
-            let image = egui::Image::from_texture(sized_image).max_size(egui::Vec2{x: 450.0, y : 450.0});
-            ui.label(format!("Hello '{name}', age {age}"));
+            let image = egui::Image::from_texture(sized_image).max_size(egui::Vec2{x: 300.0, y : 300.0});
             ui.add(image);
+            //let (image_rectangle, _response) = ui.allocate_at_least(Vec2::new(350.0,350.0), egui::Sense::click_and_drag());
+            //Align2::anchor_rect(Align2::RIGHT_BOTTOM, image_rectangle);
+            /*ui.painter().rect(
+                image_rectangle,
+                90.0,
+                Color32::from_gray(64),
+                Stroke::new(1.0, Color32::WHITE), 
+            );*/
+            //image.paint_at(ui, image_rectangle);
+            
             
             Ok(())
         });
