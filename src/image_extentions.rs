@@ -1,10 +1,11 @@
-use image::{DynamicImage,GenericImageView, GenericImage};
-pub struct DynamicImageExtender{original_image : DynamicImage, edited_image : DynamicImage}
+use egui::ColorImage;
+use image::{DynamicImage,GenericImageView, GenericImage, EncodableLayout};
+pub struct ImageWidgetExtender{original_image : DynamicImage, edited_image : DynamicImage}
 
 
-    impl DynamicImageExtender{
+    impl ImageWidgetExtender{
 
-        pub fn new(original_image : DynamicImage) -> DynamicImageExtender{
+        pub fn new(original_image : DynamicImage) -> ImageWidgetExtender{
             Self{original_image : original_image.clone(), edited_image : original_image}
         }
 
@@ -32,7 +33,6 @@ pub struct DynamicImageExtender{original_image : DynamicImage, edited_image : Dy
                     rgba[1] = rgba[1].saturating_add(g_level as u8);
                 }
                 else{
-
                     rgba[1] = rgba[1].saturating_sub(g_level.abs() as u8);
                 }
                 if b_level > 0{
@@ -41,14 +41,52 @@ pub struct DynamicImageExtender{original_image : DynamicImage, edited_image : Dy
                 else{
                     rgba[2] = rgba[2].saturating_sub(b_level.abs() as u8);
                 }
-                //rgba[1] = (rgba[1] as i16 + g_level as i16) as u8;
-                //rgba[2] = (rgba[2] as i16 + b_level as i16) as u8;
-                //rgba[1] = rgba[1].wrapping_add(g_level);
-                //rgba[2] = rgba[2].wrapping_add(b_level);
                 self.edited_image.put_pixel(pos_x, pos_y, rgba);
             }
             self.edited_image.clone()
         }
 
-        //p
+        pub fn change_image_brightness(&mut self, brightness : i16) -> DynamicImage{
+            for pixel in self.original_image.pixels(){
+
+                let mut rgba = pixel.2;
+                if brightness > 0{
+                    rgba[0] = rgba[0].saturating_add(brightness as u8);
+                    rgba[1] = rgba[1].saturating_add(brightness as u8);
+                    rgba[2] = rgba[2].saturating_add(brightness as u8);
+                }
+                else{
+                    let signed_brightness = brightness.abs() as u8;
+                    rgba[0] = rgba[0].saturating_sub(signed_brightness);
+                    rgba[1] = rgba[1].saturating_sub(signed_brightness);
+                    rgba[2] = rgba[2].saturating_sub(signed_brightness);
+                }
+                self.edited_image.put_pixel(pixel.0, pixel.1, rgba);
+            }
+            self.edited_image.clone()
+        } 
+
+        pub fn create_canvas_dynamic_image() -> DynamicImage{
+            let dyn_img = DynamicImage::new(500,500,image::ColorType::Rgb8);
+            dyn_img
+        }
+
+        pub fn dynamic_image_to_color_image(dyn_img : DynamicImage) -> ColorImage{
+            let color_image = match &dyn_img {
+                DynamicImage::ImageRgb8(image) => {
+                    egui::ColorImage::from_rgb(
+                        [image.width() as usize,image.height() as usize],
+                        image.as_bytes(),
+                    )
+                },
+                other => {
+                    let image = other.to_rgba8();
+                    egui::ColorImage::from_rgba_unmultiplied(
+                    [image.width() as usize, image.height() as usize],
+                        image.as_bytes()
+                    )
+                },
+            };
+            color_image
+        }
     }

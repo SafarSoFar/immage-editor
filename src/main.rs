@@ -11,7 +11,7 @@ use image::{DynamicImage, EncodableLayout, ImageBuffer};
 use std::io::Error;
 
 mod image_extentions;
-use image_extentions::DynamicImageExtender;
+use image_extentions::ImageWidgetExtender;
 
 const WINDOW_SIZE : Vec2 = Vec2{x: 800.0, y :500.0};
 
@@ -32,10 +32,10 @@ fn main() -> eframe::Result {
     // required image initializatoin on set up stage to prevent freezes
     let original_dynamic_image = img_path_to_dyn_image("forest.jpg");
     
-    let mut dynamic_image_extender = DynamicImageExtender::new(original_dynamic_image.clone());
+    let mut image_widget_extender = ImageWidgetExtender::new(original_dynamic_image.clone());
 
     //let color_image = img_path_to_color_image("forest.jpg").unwrap();
-    let mut color_image = dynamic_image_to_color_image(original_dynamic_image.clone());
+    let mut color_image = ImageWidgetExtender::dynamic_image_to_color_image(original_dynamic_image.clone());
     
     
     eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
@@ -53,10 +53,15 @@ fn main() -> eframe::Result {
             let brightness_slider = ui.add(egui::Slider::new(&mut brightness, -255..=255).text("Brightness"));
 
             if r_level_slider.drag_stopped() || b_level_slider.drag_stopped() || g_level_slider.drag_stopped(){
-                edited_dynamic_image = dynamic_image_extender.change_color_level(r_level, g_level, b_level);
-                color_image = dynamic_image_to_color_image(edited_dynamic_image);
+                edited_dynamic_image = image_widget_extender.change_color_level(r_level, g_level, b_level);
+                color_image = ImageWidgetExtender::dynamic_image_to_color_image(edited_dynamic_image);
             }
-
+            
+            if brightness_slider.drag_stopped(){
+                edited_dynamic_image = image_widget_extender.change_image_brightness(brightness); 
+                color_image = ImageWidgetExtender::dynamic_image_to_color_image(edited_dynamic_image);
+            }
+            
             
             let image_view_texture_handle =  ctx.load_texture("main_image", color_image.clone(), TextureOptions::LINEAR);
             let sized_image = egui::load::SizedTexture::new(image_view_texture_handle.id(), egui::vec2(color_image.size[0] as f32, color_image.size[1] as f32));
@@ -79,30 +84,6 @@ fn main() -> eframe::Result {
 }
 
 
-
-pub fn create_canvas_dynamic_image() -> DynamicImage{
-    let dyn_img = DynamicImage::new(500,500,image::ColorType::Rgb8);
-    dyn_img
-}
-
-pub fn dynamic_image_to_color_image(dyn_img : DynamicImage) -> ColorImage{
-    let color_image = match &dyn_img {
-        DynamicImage::ImageRgb8(image) => {
-            egui::ColorImage::from_rgb(
-                [image.width() as usize,image.height() as usize],
-                image.as_bytes(),
-            )
-        },
-        other => {
-            let image = other.to_rgba8();
-            egui::ColorImage::from_rgba_unmultiplied(
-            [image.width() as usize, image.height() as usize],
-                image.as_bytes()
-            )
-        },
-    };
-    color_image
-}
 
 pub fn img_path_to_dyn_image(img_path : &str) -> DynamicImage{
     let dyn_img = Reader::open(&img_path).expect("couldn't open image").decode().expect("couldn't decode image");
